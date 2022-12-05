@@ -22,10 +22,15 @@
 
 import config as cf
 import model
-import csv
+import sys
+
+sys.setrecursionlimit(10**6)
 
 def inicalizar_modelo() -> dict:
     return model.inicializar_modelo()
 
 def cargar_datos(modelo:dict, archivo_paradas: str, archivo_rutas: str) -> dict:
     return model.asignar_modelo(modelo, archivo_paradas, archivo_rutas)
+
+def grafo_informacion(modelo: dict):
+    model.grafo_informacion(modelo)

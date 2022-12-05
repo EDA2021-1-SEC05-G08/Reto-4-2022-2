@@ -30,8 +30,13 @@ import config as cf
 from DISClib.DataStructures import mapentry as me
 import DISClib.ADT.graph as gr
 from DISClib.ADT import map as mp
+from DISClib.ADT import list as lt
 from math import *
+from prettytable import PrettyTable
+import sys
 assert cf
+
+sys.setrecursionlimit(10**6)
 
 # Construcción de modelo -------------------------------------------------
 
@@ -44,7 +49,10 @@ def inicializar_modelo() -> dict:
     modelo = {
         "grafo": None,
         "paradas": None,
-        "rutas": None
+        "paradas_exclusivas": None,
+        "paradas_compartidas": None, 
+        "rutas": None,
+        "rutas_unicas": None
     }
     
     modelo["grafo"] = gr.newGraph(
@@ -65,6 +73,24 @@ def inicializar_modelo() -> dict:
         maptype='PROBING',
         comparefunction=None
         )
+
+    modelo["paradas_exclusivas"] = mp.newMap(
+        numelements=14000,
+        maptype='PROBING',
+        comparefunction=None
+        )
+
+    modelo["paradas_compartidas"] = mp.newMap(
+        numelements=14000,
+        maptype='PROBING',
+        comparefunction=None
+        )
+
+    modelo["rutas_unicas"] = mp.newMap(
+        numelements=14000,
+        maptype='PROBING',
+        comparefunction=None
+        )
         
     return modelo
 
@@ -75,22 +101,31 @@ def asignar_modelo(modelo: dict, archivo_paradas: str, archivo_rutas: str) -> di
     grafo = modelo["grafo"]
     paradas_dict = modelo["paradas"]
     rutas_dict = modelo["rutas"]
+    paradas_exclusivas = modelo["paradas_exclusivas"]
+    paradas_compartidas = modelo["paradas_compartidas"]
+    rutas_unicas = modelo["rutas_unicas"]
 
     paradas_archivo = open(archivo_paradas, "r", encoding="utf-8")
     registro =  paradas_archivo.readline().replace("\n", "").split(",")
     registro =  paradas_archivo.readline().replace("\n", "").split(",")
     while len(registro) > 1:
-        asignar_parada
         code = registro[0]
         bus_stop = registro[4]
+        if not mp.contains(rutas_unicas, bus_stop):
+            rutas_unicas = mp.put(rutas_unicas, bus_stop, registro)
         bus_stop_numero = (bus_stop.replace(" ", "").split("-"))[1]
         nombre_parada = code + "-" + bus_stop_numero
         paradas_dict = asignar_parada(paradas_dict, registro, nombre_parada)
         grafo = crear_vertice(grafo, nombre_parada)
         if registro[7] == "S":
+            if not mp.contains(paradas_compartidas, code):
+                paradas_compartidas = mp.put(paradas_compartidas, code, registro)
             nombre_parada = "T-"+code
             paradas_dict = asignar_parada(paradas_dict, registro, "T-"+code)
             grafo = crear_vertice(grafo, nombre_parada)
+        else:
+            if not mp.contains(paradas_exclusivas, code):
+                paradas_exclusivas = mp.put(paradas_exclusivas, code, registro)
         registro =  paradas_archivo.readline().replace("\n", "").split(",")
     paradas_archivo.close()
 
@@ -116,6 +151,9 @@ def asignar_modelo(modelo: dict, archivo_paradas: str, archivo_rutas: str) -> di
     modelo["grafo"] = grafo
     modelo["paradas"] = paradas_dict
     modelo["rutas"] = rutas_dict
+    modelo["paradas_exclusivas"] = paradas_exclusivas
+    modelo["paradas_comprtidas"] = paradas_compartidas
+    modelo["rutas_unicas"] = rutas_unicas
 
     return modelo
 
@@ -161,3 +199,80 @@ def haversine(paradas_dict, nombre_parada_1:str, nombre_parada_2:str):
 
     return r * c
 
+def grafo_informacion(modelo: dict):
+    
+    rutas = mp.keySet(modelo["rutas_unicas"])
+
+    print("\nTotal de rutas de bus disponibles: " + str(gr.numEdges(modelo["grafo"])) + ".")
+    print("Total de estaciones exclusivas: " + str(mp.size(modelo["paradas_exclusivas"])) + ".")
+    print("Total de estaciones compartidas: " + str(mp.size(modelo["paradas_compartidas"])) + ".")
+    print("Total de rutas utilizadas en todas las rutas: " + str(lt.size(rutas)) + ".")
+
+    longitud_maxima = 0
+    latitud_maxima = 0
+    paradas_codigos = mp.keySet(modelo["paradas_exclusivas"])
+
+    for parada_codigo in lt.iterator(paradas_codigos):
+        parada = me.getValue(mp.get(modelo["paradas_exclusivas"], parada_codigo))
+        parada_longitud = float(parada[2])
+        parada_latitud = float(parada[3])
+        if parada_longitud > longitud_maxima:
+            longitud_maxima = parada_longitud
+        if parada_latitud > latitud_maxima:
+            latitud_maxima = parada_latitud
+
+    paradas_codigos = mp.keySet(modelo["paradas_compartidas"])
+
+    for parada_codigo in lt.iterator(paradas_codigos):
+        parada = me.getValue(mp.get(modelo["paradas_compartidas"], parada_codigo))
+        parada_longitud = float(parada[2])
+        parada_latitud = float(parada[3])
+        if parada_longitud > longitud_maxima:
+            longitud_maxima = parada_longitud
+        if parada_latitud > latitud_maxima:
+            latitud_maxima = parada_latitud
+
+    longitud_minima = longitud_maxima
+    latitud_minima = latitud_maxima
+
+    paradas_codigos = mp.keySet(modelo["paradas_exclusivas"])
+
+    for parada_codigo in lt.iterator(paradas_codigos):
+        parada = me.getValue(mp.get(modelo["paradas_exclusivas"], parada_codigo))
+        parada_longitud = float(parada[2])
+        parada_latitud = float(parada[3])
+        if parada_longitud < longitud_minima:
+            longitud_minima = parada_longitud
+        if parada_latitud < latitud_minima:
+            latitud_minima = parada_latitud
+
+    paradas_codigos = mp.keySet(modelo["paradas_compartidas"])
+
+    for parada_codigo in lt.iterator(paradas_codigos):
+        parada = me.getValue(mp.get(modelo["paradas_compartidas"], parada_codigo))
+        parada_longitud = float(parada[2])
+        parada_latitud = float(parada[3])
+        if parada_longitud < longitud_minima:
+            longitud_minima = parada_longitud
+        if parada_latitud < latitud_minima:
+            latitud_minima = parada_latitud
+
+    print("Longitud minima del area cubierta por la red de buses: " + str(longitud_minima) + ".")
+    print("Longitud maxima del area cubierta por la red de buses: " + str(longitud_maxima) + ".")
+    print("Latitud minima del area cubierta por la red de buses: " + str(latitud_minima) + ".")
+    print("Latitud maxima del area cubierta por la red de buses: " + str(latitud_maxima) + ".")
+
+    paradas = gr.vertices(modelo["grafo"])
+    paradas_tabla = PrettyTable(["Identificacion", "Latitud", "Longitud", "Numero de estaciones adyacentes"])
+    for posicion in range(1, 6):
+        parada_codigo = lt.getElement(paradas, posicion)
+        parada = me.getValue(mp.get(modelo["paradas"], parada_codigo))
+        paradas_tabla.add_row([parada_codigo, parada[3], parada[2], lt.size(gr.adjacents(modelo["grafo"], parada_codigo))])
+    for posicion in range(lt.size(paradas)-6, lt.size(paradas)-1):
+        parada_codigo = lt.getElement(paradas, posicion)
+        parada = me.getValue(mp.get(modelo["paradas"], parada_codigo))
+        paradas_tabla.add_row([parada_codigo, parada[3], parada[2], lt.size(gr.adjacents(modelo["grafo"], parada_codigo))])
+    print("Primeras y ultiimas 5 estaciones registradas en el grafo:")
+    print(paradas_tabla)
+
+#grafo_informacion(asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv"))

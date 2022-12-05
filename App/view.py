@@ -24,8 +24,11 @@ import config as cf
 import sys
 import controller
 import DISClib.ADT.graph as gr
+from DISClib.ADT import map as mp
 assert cf
+import sys
 
+sys.setrecursionlimit(10**6)
 
 """
 La vista se encarga de la interacción con el usuario
@@ -37,7 +40,7 @@ operación solicitada
 def printMenu():
     print("\nBienvenido\n")
     print("1. Cargar información en el catálogo.")
-    print("0. Salir del programa\n")
+    print("0. Salir del programa.\n")
 
 modelo = None
 continuar = True
@@ -51,12 +54,13 @@ while True:
     inputs = input('Seleccione una opción para continuar: ')
 
     if int(inputs[0]) == 1:
+
         archivo_paradas = input('Ingrese el nombre del archivo de paradas: ')
         archivo_paradas = "./Data/" + archivo_paradas
-        archivo_rutas = input('Ingrese el nombre del archivo de paradas: ')
+        archivo_rutas = input('Ingrese el nombre del archivo de rutas: ')
         archivo_rutas = "./Data/" + archivo_rutas
         modelo = controller.cargar_datos(controller.inicalizar_modelo(), archivo_paradas, archivo_rutas)
-        print("\nTotal de rutas de bus disponibles: " + str(gr.numEdges(modelo["grafo"])) + ".")
+        controller.grafo_informacion(modelo)
 
     elif int(inputs[0]) == 0:
         sys.exit(0)
