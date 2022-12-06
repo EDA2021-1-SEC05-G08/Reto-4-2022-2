@@ -33,7 +33,7 @@ from DISClib.ADT import map as mp
 from DISClib.ADT import list as lt
 from math import *
 from prettytable import PrettyTable
-from DISClib.Algorithms.Graphs import dijsktra, bfs
+from DISClib.Algorithms.Graphs import dijsktra, bfs, cycles
 from DISClib.ADT import stack
 from operator import itemgetter
 import sys
@@ -377,6 +377,25 @@ def req_5(modelo: dict, code_id_origen: str, cantidad_conexiones: int, cantidad_
         tabla.add_row([parada[0], parada[1], str(parada[2]) + " km"])
     print(tabla)
         
+def req_7(modelo: dict, code_id_origen: str):
+
+    grafo = modelo["grafo"]
+    estaciones_adyacentes = gr.adjacents(grafo, code_id_origen)
+    estacion_2 = None
+    for estacion in lt.iterator(estaciones_adyacentes):
+        if estacion[0] != "T":
+            estacion_2 = estacion
+            break
+    resultado = req_1_return_2(modelo, estacion_2, code_id_origen)
+    tabla = PrettyTable(["Origen", "Destino"])
+    tabla.add_row([code_id_origen, estacion_2])
+    distancia = haversine( modelo["paradas"], code_id_origen, estacion_2) + resultado[0]
+    print("La distancia total del recorrido es: " + str(distancia) + " km.")
+    print("La cantidad de estaciones en el recorrido es de: " + str(resultado[1]+1)+ ".")
+    print("La cantidad de transborods en el recorrido es de: " + str(resultado[2])+ ".")
+    print("El recorrido contiene las siguientes rutas:")
+    print(tabla)
+    print(resultado[3])
 
 
 # Funciones auxiliares --------------------------------------------------
@@ -464,6 +483,38 @@ def req_1_return(modelo: dict, code_id_1: str, code_id_2: str) -> tuple:
 
     return (distancia, numero_estaciones)
 
+def req_1_return_2(modelo: dict, code_id_1: str, code_id_2: str) -> tuple:
+
+    grafo = modelo["grafo"]
+    paradas_dict = modelo["paradas"]
+    caminos = bfs.BreadhtFisrtSearch(grafo, code_id_1)
+    if bfs.hasPathTo(caminos, code_id_2):
+        camino = bfs.pathTo(caminos, code_id_2)
+        distancia = 0
+        numero_transbordos = 0
+        estaciones = PrettyTable([".", ".."])
+        geolocalizaciones = []
+        estaciones_list = []
+        numero_estaciones = stack.size(camino)
+        while stack.size(camino) > 0:
+            numero_estaciones = stack.size(camino)
+            estacion_codigo = stack.pop(camino)
+            if estacion_codigo[0] == "T":
+                numero_transbordos += 1
+            estacion_info = me.getValue(mp.get(paradas_dict, estacion_codigo))
+            estaciones_list.append((estacion_codigo, estacion_info))
+            geolocalizaciones.append((float(estacion_info[2]), float(estacion_info[3])))
+        for pos in range(0, len(estaciones_list)):
+            if pos+1 == len(estaciones_list):
+                distancia_tramo = haversine(paradas_dict, estaciones_list[pos][0], code_id_2)
+                distancia += distancia_tramo
+                estaciones.add_row([estaciones_list[pos][0], code_id_2])
+            else:
+                distancia_tramo = haversine(paradas_dict, estaciones_list[pos][0], estaciones_list[pos+1][0])
+                distancia += distancia_tramo
+                estaciones.add_row([estaciones_list[pos][0], estaciones_list[pos+1][0]])
+        return(distancia, numero_estaciones, numero_transbordos, estaciones)
+
 #datos = asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv")
-#req_5(datos, "1772-88", 1, 5)
+#req_7(datos, "1772-88")
 #grafo_informacion(asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv"))
