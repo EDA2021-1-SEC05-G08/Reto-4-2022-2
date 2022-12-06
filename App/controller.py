@@ -40,3 +40,6 @@ def req_1(modelo: dict, code_id_1: str, code_id_2: str):
 
 def req_2(modelo: dict, code_id_1: str, code_id_2: str):
     model.req_2(modelo, code_id_1, code_id_2)
+
+def req_3(modelo: dict):
+    model.req_3(modelo)

@@ -35,6 +35,7 @@ from math import *
 from prettytable import PrettyTable
 from DISClib.Algorithms.Graphs import dijsktra, bfs
 from DISClib.ADT import stack
+from operator import itemgetter
 import sys
 assert cf
 """
@@ -311,6 +312,30 @@ def req_2(modelo: dict, code_id_1: str, code_id_2: str):
         print("Estaciones de la ruta:")
         print(estaciones)
 
+def req_3(modelo:dict):
+
+    grafo = modelo["grafo"]
+    vertices_lista = gr.vertices(grafo)
+    vertices_conexiones_cantidad = {}
+    for vertice in lt.iterator(vertices_lista):
+        vertices_conexiones_cantidad[vertice] =  lt.size(gr.adjacents(grafo, vertice))
+    vertices_conexiones_cantidad = dict(sorted(vertices_conexiones_cantidad.items(), key=itemgetter(1)))
+
+    vertices = list(vertices_conexiones_cantidad.keys())
+    table = PrettyTable(["Component", "Componentes conectados", "Primeras y ultimas 3 componentes conectadas"])
+    for pos in range(1,6):
+        conectadas = gr.adjacents(grafo, vertices[-pos])
+        conectadas_codigos = ""
+        for i in range(0,3):
+            conectadas_codigo = str(lt.getElement(conectadas, i))
+            conectadas_codigos += conectadas_codigo + "\n"
+        for i in range(lt.size(conectadas)-4,lt.size(conectadas)-1):
+            conectadas_codigo = str(lt.getElement(conectadas, i))
+            conectadas_codigos += conectadas_codigo + "\n"
+        table.add_row([vertices[-pos], vertices_conexiones_cantidad[vertices[-pos]], conectadas_codigos])
+    print("\nEl total de componentes conectados en el grafo es: " + str(lt.size(vertices_lista)) + ".")
+    print(table)
+
 # Funciones auxiliares --------------------------------------------------
 
 def crear_vertice(grafo, nombre_parada: str):
@@ -354,5 +379,5 @@ def haversine(paradas_dict, nombre_parada_1:str, nombre_parada_2:str):
     return r * c
 
 datos = asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv")
-req_1(datos, "358-119", "356-119")
+req_3(datos)
 #grafo_informacion(asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv"))
