@@ -43,3 +43,6 @@ def req_2(modelo: dict, code_id_1: str, code_id_2: str):
 
 def req_3(modelo: dict):
     model.req_3(modelo)
+
+def req_4(modelo:dict, lon_origen:float, lat_origen:float, lon_destino:float, lat_destino:float):
+    model.req_4(modelo, lon_origen, lat_origen, lon_destino, lat_destino)

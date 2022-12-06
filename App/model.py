@@ -285,7 +285,6 @@ def req_1(modelo: dict, code_id_1: str, code_id_2: str):
     else:
         print("\nNo existe ruta entre ambas estaciones.")
 
-
 def req_2(modelo: dict, code_id_1: str, code_id_2: str):
 
     grafo = modelo["grafo"]
@@ -336,6 +335,25 @@ def req_3(modelo:dict):
     print("\nEl total de componentes conectados en el grafo es: " + str(lt.size(vertices_lista)) + ".")
     print(table)
 
+def req_4(modelo:dict, lon_origen:float, lat_origen:float, lon_destino:float, lat_destino:float):
+    
+    estaciones_origen = {}
+    estaciones_destino = {}
+    for estacion in lt.iterator(mp.keySet(modelo["paradas"])):
+        if estacion[0] != "T":
+            estacion_info = me.getValue(mp.get(modelo["paradas"], estacion))
+            estaciones_origen[estacion] = haversine_2(lon_origen, lat_origen, float(estacion_info[2]), float(estacion_info[3]))
+            estaciones_destino[estacion] = haversine_2(lon_destino, lat_destino, float(estacion_info[2]), float(estacion_info[3]))
+    estaciones_origen = dict(sorted(estaciones_origen.items(), key=itemgetter(1)))
+    estaciones_destino = dict(sorted(estaciones_destino.items(), key=itemgetter(1)))
+
+    estacion_origen = (list(estaciones_origen.keys()))[0]
+    estacion_destino = (list(estaciones_destino.keys()))[0]
+        
+    print("\nLa distancia entre la localización de origen y la estación de bus más cercana es de: " + str(estaciones_origen[estacion_origen]) + " km.")
+    print("La distancia entre la estación destino más cercana y la localización destino es de: " + str(estaciones_destino[estacion_destino]) + " km.")
+    req_2(modelo, estacion_origen, estacion_destino)
+
 # Funciones auxiliares --------------------------------------------------
 
 def crear_vertice(grafo, nombre_parada: str):
@@ -378,6 +396,22 @@ def haversine(paradas_dict, nombre_parada_1:str, nombre_parada_2:str):
 
     return r * c
 
+def haversine_2(lon_1: float, lat_1: float, lon_2: float, lat_2: float): 
+
+    lat_1 = float(lat_1)
+    lon_1 = float(lon_1)
+    lat_2 = float(lat_2)
+    lon_2 = float(lon_2)
+    r = 6372.8 
+    d_lat = radians(lat_2 - lat_1)
+    d_lon = radians(lon_2 - lon_1)
+    lat_1 = radians(lat_1)
+    lat_2 = radians(lat_2)
+    a = sin(d_lat/2)**2 + cos(lat_1)*cos(lat_2)*sin(d_lon/2)**2
+    c = 2*asin(sqrt(a)) 
+
+    return r * c
+
 datos = asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv")
-req_3(datos)
+req_4(datos, 21, 22, 0, 5)
 #grafo_informacion(asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv"))

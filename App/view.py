@@ -43,6 +43,7 @@ def printMenu():
     print("2. Buscar un camino posible entre dos estaciones.")
     print("3. Buscar el camino con menos estaciones entre dos estaciones.")
     print("4. Reconocer los componentes conectados de la Red de rutas de bus.")
+    print("5. Planear el camino con distancia mínima entre dos puntos geográficos.")
     print("0. Salir del programa.\n")
 
 modelo = None
@@ -78,6 +79,12 @@ while True:
     elif int(inputs[0]) == 4:
         controller.req_3(modelo)
 
+    elif int(inputs[0]) == 5:
+        lon_origen = float(input("Ingrese la longitud del punto de origen: "))
+        lat_origen = float(input("Ingrese la latitud del punto de origen: "))
+        lon_destino = float(input("Ingrese la longitud del punto de destino: "))
+        lat_destino = float(input("Ingrese la latitud del punto de destino: "))
+        controller.req_4(modelo, lon_origen, lat_origen, lon_destino, lat_destino)
 
     elif int(inputs[0]) == 0:
         sys.exit(0)
