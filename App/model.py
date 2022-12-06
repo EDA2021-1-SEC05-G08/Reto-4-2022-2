@@ -33,9 +33,19 @@ from DISClib.ADT import map as mp
 from DISClib.ADT import list as lt
 from math import *
 from prettytable import PrettyTable
+from DISClib.Algorithms.Graphs import dijsktra, bfs
+from DISClib.ADT import stack
 import sys
 assert cf
-
+"""
+cycles.DirectedCycle()
+cycles.hasCycle()
+dfo.dfsVertex()
+dfs.pathTo()
+dfs.hasPathTo
+dijsktra.
+bfs.BreadhtFisrtSearch()
+"""
 sys.setrecursionlimit(10**6)
 
 # Construcción de modelo -------------------------------------------------
@@ -157,47 +167,7 @@ def asignar_modelo(modelo: dict, archivo_paradas: str, archivo_rutas: str) -> di
 
     return modelo
 
-# Funciones auxiliares --------------------------------------------------
-
-def crear_vertice(grafo, nombre_parada: str):
-
-    if not gr.containsVertex(grafo, nombre_parada):
-        gr.insertVertex(grafo, nombre_parada)
-
-    return grafo
-
-def crear_arco(grafo, nombre_vertice_partida: str, nombre_vertice_llegada:str, peso: float):
-    gr.addEdge(grafo, nombre_vertice_partida, nombre_vertice_llegada, peso)
-    return grafo
-
-def asignar_parada(paradas, parada: list, nombre_parada:str):
-    paradas = mp.put(paradas, nombre_parada, parada)
-    return paradas
-
-def asignar_ruta(rutas, ruta: list, nombre_ruta:str):
-    rutas = mp.put(rutas, nombre_ruta, ruta)
-    return rutas
-
-def haversine(paradas_dict, nombre_parada_1:str, nombre_parada_2:str): 
-
-    lon_1 = me.getValue(mp.get(paradas_dict, nombre_parada_1))[2]
-    lat_1 = me.getValue(mp.get(paradas_dict, nombre_parada_1))[3]
-    lon_2 = me.getValue(mp.get(paradas_dict, nombre_parada_2))[2]
-    lat_2 = me.getValue(mp.get(paradas_dict, nombre_parada_2))[3]
-
-    lat_1 = float(lat_1)
-    lon_1 = float(lon_1)
-    lat_2 = float(lat_2)
-    lon_2 = float(lon_2)
-    r = 6372.8 
-    d_lat = radians(lat_2 - lat_1)
-    d_lon = radians(lon_2 - lon_1)
-    lat_1 = radians(lat_1)
-    lat_2 = radians(lat_2)
-    a = sin(d_lat/2)**2 + cos(lat_1)*cos(lat_2)*sin(d_lon/2)**2
-    c = 2*asin(sqrt(a)) 
-
-    return r * c
+# Funciones de consulta -------------------------------------------------
 
 def grafo_informacion(modelo: dict):
     
@@ -275,4 +245,114 @@ def grafo_informacion(modelo: dict):
     print("Primeras y ultiimas 5 estaciones registradas en el grafo:")
     print(paradas_tabla)
 
+def req_1(modelo: dict, code_id_1: str, code_id_2: str):
+
+    grafo = modelo["grafo"]
+    paradas_dict = modelo["paradas"]
+    caminos = bfs.BreadhtFisrtSearch(grafo, code_id_1)
+    if bfs.hasPathTo(caminos, code_id_2):
+        camino = bfs.pathTo(caminos, code_id_2)
+        distancia = 0
+        numero_transbordos = 0
+        estaciones = PrettyTable(["Origen", "Destino", "Distancia"])
+        geolocalizaciones = []
+        estaciones_list = []
+        numero_estaciones = stack.size(camino)
+        while stack.size(camino) > 0:
+            numero_estaciones = stack.size(camino)
+            estacion_codigo = stack.pop(camino)
+            if estacion_codigo[0] == "T":
+                numero_transbordos += 1
+            estacion_info = me.getValue(mp.get(paradas_dict, estacion_codigo))
+            estaciones_list.append((estacion_codigo, estacion_info))
+            geolocalizaciones.append((float(estacion_info[2]), float(estacion_info[3])))
+        for pos in range(0, len(estaciones_list)):
+            if pos+1 == len(estaciones_list):
+                distancia_tramo = haversine(paradas_dict, estaciones_list[pos][0], code_id_2)
+                distancia += distancia_tramo
+                estaciones.add_row([estaciones_list[pos][0], code_id_2, str(distancia_tramo) + " km"])
+            else:
+                distancia_tramo = haversine(paradas_dict, estaciones_list[pos][0], estaciones_list[pos+1][0])
+                distancia += distancia_tramo
+                estaciones.add_row([estaciones_list[pos][0], estaciones_list[pos+1][0], str(distancia_tramo) + " km"])
+        print("\nDistancia total de recorrido: " + str(distancia) + " km.")
+        print("Total de estaciones que contiene el camino: " + str(numero_estaciones) + ".")
+        print("Total de transbordos que contiene la ruta: " + str(numero_transbordos) + ".")
+        print("Estaciones de la ruta:")
+        print(estaciones)
+
+    else:
+        print("\nNo existe ruta entre ambas estaciones.")
+
+
+def req_2(modelo: dict, code_id_1: str, code_id_2: str):
+
+    grafo = modelo["grafo"]
+    caminos = dijsktra.Dijkstra(grafo, code_id_1)
+    camino = dijsktra.pathTo(caminos, code_id_2)
+    distancia = 0
+    numero_estaciones = 0
+    numero_transbordos = 0
+    estaciones = PrettyTable(["Origen", "Destino", "Distancia"])
+    if camino is None:
+        print("\nNo existe ruta entre ambas estaciones.")
+    else:
+        numero_estaciones = stack.size(camino)
+        while stack.size(camino) > 0:
+            estacion = stack.pop(camino)
+            distancia += estacion['weight']
+            if estacion['vertexB'][0] == "T":
+                numero_transbordos += 1
+            estaciones.add_row([estacion['vertexA'], estacion['vertexB'], str(estacion['weight']) + " km"])
+    
+        print("\nDistancia total de recorrido: " + str(distancia) + " km.")
+        print("Total de estaciones que contiene el camino: " + str(numero_estaciones) + ".")
+        print("Total de transbordos que contiene la ruta: " + str(numero_transbordos) + ".")
+        print("Estaciones de la ruta:")
+        print(estaciones)
+
+# Funciones auxiliares --------------------------------------------------
+
+def crear_vertice(grafo, nombre_parada: str):
+
+    if not gr.containsVertex(grafo, nombre_parada):
+        gr.insertVertex(grafo, nombre_parada)
+
+    return grafo
+
+def crear_arco(grafo, nombre_vertice_partida: str, nombre_vertice_llegada:str, peso: float):
+    gr.addEdge(grafo, nombre_vertice_partida, nombre_vertice_llegada, peso)
+    return grafo
+
+def asignar_parada(paradas, parada: list, nombre_parada:str):
+    paradas = mp.put(paradas, nombre_parada, parada)
+    return paradas
+
+def asignar_ruta(rutas, ruta: list, nombre_ruta:str):
+    rutas = mp.put(rutas, nombre_ruta, ruta)
+    return rutas
+
+def haversine(paradas_dict, nombre_parada_1:str, nombre_parada_2:str): 
+
+    lon_1 = me.getValue(mp.get(paradas_dict, nombre_parada_1))[2]
+    lat_1 = me.getValue(mp.get(paradas_dict, nombre_parada_1))[3]
+    lon_2 = me.getValue(mp.get(paradas_dict, nombre_parada_2))[2]
+    lat_2 = me.getValue(mp.get(paradas_dict, nombre_parada_2))[3]
+
+    lat_1 = float(lat_1)
+    lon_1 = float(lon_1)
+    lat_2 = float(lat_2)
+    lon_2 = float(lon_2)
+    r = 6372.8 
+    d_lat = radians(lat_2 - lat_1)
+    d_lon = radians(lon_2 - lon_1)
+    lat_1 = radians(lat_1)
+    lat_2 = radians(lat_2)
+    a = sin(d_lat/2)**2 + cos(lat_1)*cos(lat_2)*sin(d_lon/2)**2
+    c = 2*asin(sqrt(a)) 
+
+    return r * c
+
+datos = asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv")
+req_1(datos, "358-119", "356-119")
 #grafo_informacion(asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv"))

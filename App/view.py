@@ -40,6 +40,8 @@ operación solicitada
 def printMenu():
     print("\nBienvenido\n")
     print("1. Cargar información en el catálogo.")
+    print("2. Buscar un camino posible entre dos estaciones.")
+    print("3.  Buscar el camino con menos estaciones entre dos estaciones.")
     print("0. Salir del programa.\n")
 
 modelo = None
@@ -61,6 +63,17 @@ while True:
         archivo_rutas = "./Data/" + archivo_rutas
         modelo = controller.cargar_datos(controller.inicalizar_modelo(), archivo_paradas, archivo_rutas)
         controller.grafo_informacion(modelo)
+
+    elif int(inputs[0]) == 2:
+        code_id_1 = input('Ingrese el CODE-ID de la estación de partida: ')
+        code_id_2 = input('Ingrese el CODE-ID de la estación de destino: ')
+        controller.req_1(modelo, code_id_1, code_id_2)
+
+    elif int(inputs[0]) == 3:
+        code_id_1 = input('Ingrese el CODE-ID de la estación de partida: ')
+        code_id_2 = input('Ingrese el CODE-ID de la estación de destino: ')
+        controller.req_2(modelo, code_id_1, code_id_2)
+
 
     elif int(inputs[0]) == 0:
         sys.exit(0)
