@@ -285,6 +285,8 @@ def req_1(modelo: dict, code_id_1: str, code_id_2: str):
     else:
         print("\nNo existe ruta entre ambas estaciones.")
 
+    return (distancia, numero_estaciones, numero_transbordos, estaciones)
+
 def req_2(modelo: dict, code_id_1: str, code_id_2: str):
 
     grafo = modelo["grafo"]
@@ -354,6 +356,29 @@ def req_4(modelo:dict, lon_origen:float, lat_origen:float, lon_destino:float, la
     print("La distancia entre la estación destino más cercana y la localización destino es de: " + str(estaciones_destino[estacion_destino]) + " km.")
     req_2(modelo, estacion_origen, estacion_destino)
 
+def req_5(modelo: dict, code_id_origen: str, cantidad_conexiones: int, cantidad_elementos: int):
+
+    paradas_dict = modelo["paradas"]
+    paradas_list = mp.keySet(paradas_dict)
+    paradas_alcanzables = []
+    contador = 0
+    for parada_destino in lt.iterator(paradas_list):
+        if parada_destino[0] != "T" and parada_destino != code_id_origen:
+            camino_data = req_1_return(modelo, code_id_origen, parada_destino)
+            if camino_data[1] <= cantidad_conexiones and camino_data[1] != -1:
+                destino_data = me.getValue(mp.get(paradas_dict, parada_destino))
+                tupla = (parada_destino, (destino_data[3], destino_data[2]), camino_data[0])
+                paradas_alcanzables.append(tupla)
+                contador += 1
+                if contador == cantidad_elementos:
+                    break
+    tabla = PrettyTable(["Identificador", "Geolocalizacion", "Distancia del origen a la estacion"])
+    for parada in paradas_alcanzables:
+        tabla.add_row([parada[0], parada[1], str(parada[2]) + " km"])
+    print(tabla)
+        
+
+
 # Funciones auxiliares --------------------------------------------------
 
 def crear_vertice(grafo, nombre_parada: str):
@@ -412,6 +437,33 @@ def haversine_2(lon_1: float, lat_1: float, lon_2: float, lat_2: float):
 
     return r * c
 
-datos = asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv")
-req_4(datos, 21, 22, 0, 5)
+def req_1_return(modelo: dict, code_id_1: str, code_id_2: str) -> tuple:
+
+    grafo = modelo["grafo"]
+    paradas_dict = modelo["paradas"]
+    caminos = bfs.BreadhtFisrtSearch(grafo, code_id_1)
+    distancia = -1
+    numero_estaciones = -1
+    if bfs.hasPathTo(caminos, code_id_2):
+        camino = bfs.pathTo(caminos, code_id_2)
+        distancia = 0
+        estaciones_list = []
+        numero_estaciones = stack.size(camino)
+        while stack.size(camino) > 0:
+            numero_estaciones = stack.size(camino)
+            estacion_codigo = stack.pop(camino)
+            estacion_info = me.getValue(mp.get(paradas_dict, estacion_codigo))
+            estaciones_list.append((estacion_codigo, estacion_info))
+        for pos in range(0, len(estaciones_list)):
+            if pos+1 == len(estaciones_list):
+                distancia_tramo = haversine(paradas_dict, estaciones_list[pos][0], code_id_2)
+                distancia += distancia_tramo
+            else:
+                distancia_tramo = haversine(paradas_dict, estaciones_list[pos][0], estaciones_list[pos+1][0])
+                distancia += distancia_tramo
+
+    return (distancia, numero_estaciones)
+
+#datos = asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv")
+#req_5(datos, "1772-88", 1, 5)
 #grafo_informacion(asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv"))

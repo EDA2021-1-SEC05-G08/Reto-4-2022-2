@@ -46,3 +46,6 @@ def req_3(modelo: dict):
 
 def req_4(modelo:dict, lon_origen:float, lat_origen:float, lon_destino:float, lat_destino:float):
     model.req_4(modelo, lon_origen, lat_origen, lon_destino, lat_destino)
+
+def req_5(modelo: dict, code_id_origen: str, cantidad_conexiones: int, cantidad_elementos: int):
+    model.req_5(modelo, code_id_origen, cantidad_conexiones, cantidad_elementos)
