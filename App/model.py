@@ -376,7 +376,34 @@ def req_5(modelo: dict, code_id_origen: str, cantidad_conexiones: int, cantidad_
     for parada in paradas_alcanzables:
         tabla.add_row([parada[0], parada[1], str(parada[2]) + " km"])
     print(tabla)
-        
+
+def req_6(modelo: dict, code_id_origen: str, barrio:str):
+    
+    paradas = modelo["paradas"]
+    paradas_codigos = mp.keySet(paradas)
+    paradas_destino = []
+    for parada in lt.iterator(paradas_codigos):
+        parada_info = me.getValue(mp.get(paradas, parada))
+        if parada_info[6] == barrio:
+            paradas_destino.append((parada, parada_info))
+    parada_origen_info = me.getValue(mp.get(paradas, code_id_origen))
+    longitud_origen = parada_origen_info[2]
+    longitud_origen = float(longitud_origen)
+    latitud_origen = parada_origen_info[3]
+    latitud_origen = float(latitud_origen)
+    paradas_destino_distancias = {}
+    for parada in paradas_destino:
+        parada_info = parada[1]
+        longitud_destino = float(parada_info[2])
+        latitud_destino = float(parada_info[3])
+        distancia = haversine_2(longitud_origen, latitud_origen, longitud_destino, latitud_destino)
+        paradas_destino_distancias[parada[0]] = distancia
+    
+    paradas_destino_distancias = dict(sorted(paradas_destino_distancias.items(), key=itemgetter(1)))
+    parada_destino = (list(paradas_destino_distancias.keys()))[0]
+    
+    req_2(modelo, code_id_origen, parada_destino)
+    
 def req_7(modelo: dict, code_id_origen: str):
 
     grafo = modelo["grafo"]
@@ -396,7 +423,6 @@ def req_7(modelo: dict, code_id_origen: str):
     print("El recorrido contiene las siguientes rutas:")
     print(tabla)
     print(resultado[3])
-
 
 # Funciones auxiliares --------------------------------------------------
 
@@ -514,7 +540,3 @@ def req_1_return_2(modelo: dict, code_id_1: str, code_id_2: str) -> tuple:
                 distancia += distancia_tramo
                 estaciones.add_row([estaciones_list[pos][0], estaciones_list[pos+1][0]])
         return(distancia, numero_estaciones, numero_transbordos, estaciones)
-
-#datos = asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv")
-#req_7(datos, "1772-88")
-#grafo_informacion(asignar_modelo(inicializar_modelo(), "./Data/paradas.csv", "./Data/rutas.csv"))

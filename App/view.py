@@ -23,8 +23,6 @@
 import config as cf
 import sys
 import controller
-import DISClib.ADT.graph as gr
-from DISClib.ADT import map as mp
 assert cf
 import sys
 
@@ -45,6 +43,7 @@ def printMenu():
     print("4. Reconocer los componentes conectados de la Red de rutas de bus.")
     print("5. Planear el camino con distancia mínima entre dos puntos geográficos.")
     print("6. Localizar las estaciones “alcanzables” desde un origen a un número máximo de conexiones dado.")
+    print("7. Buscar el camino con distancia mínima entre una estación de origen y un vecindario de destino.")
     print("8. Encontrar un posible camino circular desde una estación.")
     print("0. Salir del programa.\n")
 
@@ -93,6 +92,11 @@ while True:
         cantidad = int(input("Ingrese el numero de conexiones permitidas: "))
         limite = int(input("Ingrese el numero de estaciones que desea visualizar (esto por tiempo de ejecucion del programa y limites de recursion): "))
         controller.req_5(modelo, origen, cantidad, limite)
+
+    elif int(inputs[0]) == 7:
+        origen = input("Ingrese el CODE-ID de la parada de origen: ")
+        barrio = input("Ingrese el nombre del barrio de destino: ")
+        controller.req_6(modelo, origen, barrio)
 
     elif int(inputs[0]) == 8:
         origen = input("Ingrese el CODE-ID de la parada de origen: ")
